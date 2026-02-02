@@ -1,0 +1,77 @@
+{
+  "lastUpdated": "2026-02-02T15:45:00Z",
+  "updatedBy": "geeves",
+  "tasks": [
+    {
+      "id": "ctx-backup-system",
+      "title": "✅ Context backup system",
+      "description": "5-min cron checkpoint + ACTIVE.md tracking",
+      "category": "geeves",
+      "priority": "high",
+      "status": "done",
+      "due": "2026-02-02",
+      "createdAt": "2026-02-02T15:40:00Z",
+      "completedAt": "2026-02-02T15:45:00Z"
+    },
+    {
+      "id": "kanban-rebuild",
+      "title": "Rebuild Kanban board",
+      "description": "File-based JSON storage, Geeves can read/write",
+      "category": "geeves",
+      "priority": "high",
+      "status": "progress",
+      "due": "2026-02-02",
+      "createdAt": "2026-02-02T15:40:00Z"
+    },
+    {
+      "id": "skool-ghl-middleware",
+      "title": "Skool → GHL Middleware",
+      "description": "Connect Skool events to GHL webhooks via Make/n8n. Workflows ready, need middleware.",
+      "category": "geeves",
+      "priority": "high",
+      "status": "backlog",
+      "due": "",
+      "createdAt": "2026-02-01T12:00:00Z"
+    },
+    {
+      "id": "daily-metrics-automation",
+      "title": "Daily Metrics Automation",
+      "description": "Pull Skool, GHL, Meta Ads, Stripe metrics → automated dashboard",
+      "category": "geeves",
+      "priority": "high",
+      "status": "backlog",
+      "due": "",
+      "createdAt": "2026-01-30T08:00:00Z"
+    },
+    {
+      "id": "dave-morrow-close",
+      "title": "Close Dave Morrow → VIP",
+      "description": "Hot lead, understands the math, ready for 90-day offer with 1:1 session",
+      "category": "lfg",
+      "priority": "high",
+      "status": "todo",
+      "due": "2026-02-03",
+      "createdAt": "2026-02-01T12:00:00Z"
+    },
+    {
+      "id": "instagram-launch",
+      "title": "Instagram Strategy Launch",
+      "description": "Bio rewrite, unfollow sprints, Week 1 content filmed/scheduled",
+      "category": "lfg",
+      "priority": "high",
+      "status": "todo",
+      "due": "2026-02-03",
+      "createdAt": "2026-01-30T08:00:00Z"
+    },
+    {
+      "id": "client-progress-system",
+      "title": "Client Progress Monitoring",
+      "description": "Build system to track who's stuck, who needs attention",
+      "category": "geeves",
+      "priority": "medium",
+      "status": "backlog",
+      "due": "",
+      "createdAt": "2026-01-30T08:00:00Z"
+    }
+  ]
+}

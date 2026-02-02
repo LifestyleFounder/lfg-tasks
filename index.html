@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>LFG Command Center</title>
+    
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F2A1E">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="LFG Tasks">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='%230F2A1E' rx='32'/><text x='96' y='120' font-family='system-ui' font-size='72' font-weight='bold' fill='%23C8A24A' text-anchor='middle'>LF</text></svg>">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --forest: #0F2A1E;
+            --sage: #7E9B86;
+            --cream: #F7F3EA;
+            --stone: #D8D2C6;
+            --charcoal: #1B1B1B;
+            --gold: #C8A24A;
+            --red: #dc2626;
+            --red-light: #fee2e2;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--cream);
+            color: var(--charcoal);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        header {
+            background: var(--forest);
+            color: white;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--gold);
+            color: var(--forest);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .logo h1 {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .logo-sub {
+            font-size: 12px;
+            color: var(--sage);
+            margin-top: 2px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+
+        .btn-gold { background: var(--gold); color: var(--forest); }
+        .btn-gold:hover { background: #d4b05a; }
+        .btn-ghost { background: rgba(255,255,255,0.1); color: white; }
+        .btn-ghost:hover { background: rgba(255,255,255,0.2); }
+
+        /* Sync Status */
+        .sync-status {
+            font-size: 11px;
+            color: var(--sage);
+            margin-right: 12px;
+        }
+
+        .sync-status.synced { color: var(--sage); }
+        .sync-status.modified { color: var(--gold); }
+
+        /* Main Layout */
+        main {
+            padding: 24px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* Stats Bar */
+        .stats {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            background: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--forest);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--sage);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 2px solid var(--stone);
+            background: white;
+            color: var(--charcoal);
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            border-color: var(--forest);
+            background: var(--forest);
+            color: white;
+        }
+
+        .filter-btn[data-cat="lfg"].active { background: var(--sage); border-color: var(--sage); }
+        .filter-btn[data-cat="geeves"].active { background: var(--charcoal); border-color: var(--charcoal); }
+        .filter-btn[data-cat="personal"].active { background: var(--gold); border-color: var(--gold); color: var(--charcoal); }
+
+        /* Board */
+        .board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        @media (max-width: 1200px) { .board { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 700px) { .board { grid-template-columns: 1fr; } }
+
+        /* Columns */
+        .column {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .col-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--stone);
+        }
+
+        .col-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--forest);
+        }
+
+        .col-count {
+            background: var(--stone);
+            color: var(--forest);
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .column[data-status="todo"] .col-header { border-color: var(--sage); }
+        .column[data-status="progress"] .col-header { border-color: var(--gold); }
+        .column[data-status="done"] .col-header { border-color: var(--forest); }
+
+        .col-tasks {
+            flex: 1;
+            min-height: 100px;
+        }
+
+        .col-tasks.drag-over {
+            background: rgba(126, 155, 134, 0.1);
+            border-radius: 8px;
+        }
+
+        /* Task Cards */
+        .task {
+            background: var(--cream);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 10px;
+            cursor: grab;
+            transition: all 0.15s;
+            border-left: 3px solid transparent;
+        }
+
+        .task:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transform: translateY(-1px);
+        }
+
+        .task.dragging { opacity: 0.5; }
+
+        .task.priority-high { border-left-color: var(--red); }
+        .task.priority-medium { border-left-color: var(--gold); }
+        .task.priority-low { border-left-color: var(--sage); }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .task-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--charcoal);
+            line-height: 1.4;
+            flex: 1;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+
+        .task:hover .task-actions { opacity: 1; }
+
+        .task-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: var(--sage);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .task-btn:hover { background: var(--stone); color: var(--forest); }
+        .task-btn.delete:hover { background: var(--red-light); color: var(--red); }
+
+        .task-desc {
+            font-size: 12px;
+            color: var(--sage);
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+
+        .task-meta {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .tag {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        .tag-lfg { background: rgba(126,155,134,0.2); color: var(--forest); }
+        .tag-geeves { background: rgba(27,27,27,0.1); color: var(--charcoal); }
+        .tag-personal { background: rgba(200,162,74,0.2); color: #8B6914; }
+
+        .due {
+            font-size: 11px;
+            color: var(--sage);
+            margin-left: auto;
+        }
+
+        .due.overdue { color: var(--red); }
+        .due.soon { color: var(--gold); }
+
+        /* Add Task */
+        .add-btn {
+            width: 100%;
+            padding: 10px;
+            border: 2px dashed var(--stone);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--sage);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: auto;
+            font-family: inherit;
+        }
+
+        .add-btn:hover {
+            border-color: var(--sage);
+            color: var(--forest);
+        }
+
+        /* Modal */
+        .modal-bg {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 42, 30, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s;
+        }
+
+        .modal-bg.active { opacity: 1; visibility: visible; }
+
+        .modal {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            width: 90%;
+            max-width: 480px;
+            transform: translateY(20px);
+            transition: transform 0.2s;
+        }
+
+        .modal-bg.active .modal { transform: translateY(0); }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--forest);
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: var(--stone);
+            cursor: pointer;
+            color: var(--charcoal);
+        }
+
+        .modal-close:hover { background: var(--forest); color: white; }
+
+        .form-group { margin-bottom: 16px; }
+
+        .form-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--forest);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid var(--stone);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            background: var(--cream);
+        }
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--sage);
+            background: white;
+        }
+
+        .form-textarea { min-height: 80px; resize: vertical; }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .form-actions .btn { flex: 1; padding: 12px; }
+        .btn-secondary { background: var(--stone); color: var(--forest); }
+        .btn-secondary:hover { background: var(--sage); color: white; }
+        .btn-primary { background: var(--forest); color: white; }
+        .btn-primary:hover { background: var(--charcoal); }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1100;
+        }
+
+        .toast {
+            background: var(--forest);
+            color: white;
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-top: 8px;
+            animation: slideIn 0.2s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Empty State */
+        .empty {
+            text-align: center;
+            padding: 30px 15px;
+            color: var(--sage);
+        }
+
+        .empty-icon { font-size: 32px; margin-bottom: 8px; }
+        .empty-text { font-size: 12px; }
+
+        /* Source indicator */
+        .source-info {
+            text-align: center;
+            padding: 12px;
+            background: rgba(126,155,134,0.1);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 12px;
+            color: var(--forest);
+        }
+
+        .source-info code {
+            background: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <div class="logo-icon">LF</div>
+            <div>
+                <h1>Command Center</h1>
+                <div class="logo-sub">Lifestyle Founders HQ</div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <span class="sync-status" id="syncStatus">Loading...</span>
+            <button class="btn btn-ghost" onclick="loadTasks()">↻ Reload</button>
+            <button class="btn btn-ghost" onclick="exportTasks()">↓ Export</button>
+            <button class="btn btn-gold" onclick="openModal()">+ New Task</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="source-info">
+            📁 Data source: <code>kanban/tasks.json</code> — Geeves can read/write this file directly
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value" id="statTotal">0</div>
+                <div class="stat-label">Total</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="statTodo">0</div>
+                <div class="stat-label">To Do</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="statProgress">0</div>
+                <div class="stat-label">In Progress</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="statDone">0</div>
+                <div class="stat-label">Done</div>
+            </div>
+        </div>
+
+        <div class="filters">
+            <button class="filter-btn active" data-cat="all">All</button>
+            <button class="filter-btn" data-cat="lfg">LFG</button>
+            <button class="filter-btn" data-cat="geeves">Geeves</button>
+            <button class="filter-btn" data-cat="personal">Personal</button>
+        </div>
+
+        <div class="board">
+            <div class="column" data-status="backlog">
+                <div class="col-header">
+                    <span class="col-title">Backlog</span>
+                    <span class="col-count" id="countBacklog">0</span>
+                </div>
+                <div class="col-tasks" id="tasksBacklog"></div>
+                <button class="add-btn" onclick="openModal('backlog')">+ Add</button>
+            </div>
+
+            <div class="column" data-status="todo">
+                <div class="col-header">
+                    <span class="col-title">To Do</span>
+                    <span class="col-count" id="countTodo">0</span>
+                </div>
+                <div class="col-tasks" id="tasksTodo"></div>
+                <button class="add-btn" onclick="openModal('todo')">+ Add</button>
+            </div>
+
+            <div class="column" data-status="progress">
+                <div class="col-header">
+                    <span class="col-title">In Progress</span>
+                    <span class="col-count" id="countProgress">0</span>
+                </div>
+                <div class="col-tasks" id="tasksProgress"></div>
+                <button class="add-btn" onclick="openModal('progress')">+ Add</button>
+            </div>
+
+            <div class="column" data-status="done">
+                <div class="col-header">
+                    <span class="col-title">Done</span>
+                    <span class="col-count" id="countDone">0</span>
+                </div>
+                <div class="col-tasks" id="tasksDone"></div>
+                <button class="add-btn" onclick="openModal('done')">+ Add</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal -->
+    <div class="modal-bg" id="modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">New Task</h2>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <form id="taskForm" onsubmit="saveTask(event)">
+                <input type="hidden" id="taskId">
+                <div class="form-group">
+                    <label class="form-label">Title</label>
+                    <input type="text" class="form-input" id="taskTitle" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-textarea" id="taskDesc"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Category</label>
+                        <select class="form-select" id="taskCat">
+                            <option value="lfg">LFG</option>
+                            <option value="geeves">Geeves</option>
+                            <option value="personal">Personal</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Priority</label>
+                        <select class="form-select" id="taskPriority">
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" id="taskStatus">
+                            <option value="backlog">Backlog</option>
+                            <option value="todo">To Do</option>
+                            <option value="progress">In Progress</option>
+                            <option value="done">Done</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Due Date</label>
+                        <input type="date" class="form-input" id="taskDue">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toasts"></div>
+
+    <script>
+        let tasks = [];
+        let filter = 'all';
+        let dragged = null;
+        let modified = false;
+
+        // Load tasks from JSON file
+        async function loadTasks() {
+            try {
+                const res = await fetch('tasks.json?' + Date.now());
+                const data = await res.json();
+                tasks = data.tasks || [];
+                modified = false;
+                updateSyncStatus();
+                render();
+                toast('Loaded from tasks.json');
+            } catch (e) {
+                console.error('Failed to load tasks.json:', e);
+                // Fallback to localStorage if file not found
+                const stored = localStorage.getItem('lfg-tasks-v2');
+                if (stored) {
+                    tasks = JSON.parse(stored);
+                    toast('Loaded from localStorage (offline mode)');
+                }
+                render();
+            }
+        }
+
+        function updateSyncStatus() {
+            const el = document.getElementById('syncStatus');
+            if (modified) {
+                el.textContent = '● Modified (export to save)';
+                el.className = 'sync-status modified';
+            } else {
+                el.textContent = '✓ Synced with tasks.json';
+                el.className = 'sync-status synced';
+            }
+        }
+
+        function render() {
+            const cols = { backlog: [], todo: [], progress: [], done: [] };
+            
+            tasks.forEach(t => {
+                if (filter === 'all' || t.category === filter) {
+                    if (cols[t.status]) cols[t.status].push(t);
+                }
+            });
+
+            Object.keys(cols).forEach(status => {
+                const container = document.getElementById('tasks' + status.charAt(0).toUpperCase() + status.slice(1));
+                const count = cols[status].length;
+                
+                document.getElementById('count' + status.charAt(0).toUpperCase() + status.slice(1)).textContent = count;
+
+                if (count === 0) {
+                    container.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Empty</div></div>';
+                } else {
+                    container.innerHTML = cols[status].map(taskCard).join('');
+                }
+            });
+
+            // Stats
+            document.getElementById('statTotal').textContent = tasks.length;
+            document.getElementById('statTodo').textContent = tasks.filter(t => t.status === 'todo').length;
+            document.getElementById('statProgress').textContent = tasks.filter(t => t.status === 'progress').length;
+            document.getElementById('statDone').textContent = tasks.filter(t => t.status === 'done').length;
+
+            setupDrag();
+        }
+
+        function taskCard(t) {
+            const dueClass = getDueClass(t.due);
+            const dueText = formatDue(t.due);
+            return `
+                <div class="task priority-${t.priority}" draggable="true" data-id="${t.id}">
+                    <div class="task-header">
+                        <span class="task-title">${esc(t.title)}</span>
+                        <div class="task-actions">
+                            <button class="task-btn" onclick="editTask('${t.id}')" title="Edit">✎</button>
+                            <button class="task-btn delete" onclick="deleteTask('${t.id}')" title="Delete">✕</button>
+                        </div>
+                    </div>
+                    ${t.description ? `<div class="task-desc">${esc(t.description)}</div>` : ''}
+                    <div class="task-meta">
+                        <span class="tag tag-${t.category}">${t.category}</span>
+                        ${t.due ? `<span class="due ${dueClass}">📅 ${dueText}</span>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function setupDrag() {
+            document.querySelectorAll('.task').forEach(el => {
+                el.addEventListener('dragstart', e => {
+                    dragged = el;
+                    el.classList.add('dragging');
+                });
+                el.addEventListener('dragend', e => {
+                    el.classList.remove('dragging');
+                    document.querySelectorAll('.col-tasks').forEach(c => c.classList.remove('drag-over'));
+                    dragged = null;
+                });
+            });
+
+            document.querySelectorAll('.col-tasks').forEach(col => {
+                col.addEventListener('dragover', e => { e.preventDefault(); col.classList.add('drag-over'); });
+                col.addEventListener('dragleave', () => col.classList.remove('drag-over'));
+                col.addEventListener('drop', e => {
+                    e.preventDefault();
+                    col.classList.remove('drag-over');
+                    if (dragged) {
+                        const id = dragged.dataset.id;
+                        const newStatus = col.id.replace('tasks', '').toLowerCase();
+                        const task = tasks.find(t => t.id === id);
+                        if (task && task.status !== newStatus) {
+                            task.status = newStatus;
+                            task.updatedAt = new Date().toISOString();
+                            if (newStatus === 'done') task.completedAt = new Date().toISOString();
+                            markModified();
+                            render();
+                            toast('Moved to ' + newStatus);
+                        }
+                    }
+                });
+            });
+        }
+
+        // Filters
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                filter = btn.dataset.cat;
+                render();
+            });
+        });
+
+        // Modal
+        function openModal(status = 'todo') {
+            document.getElementById('modal').classList.add('active');
+            document.getElementById('modalTitle').textContent = 'New Task';
+            document.getElementById('taskForm').reset();
+            document.getElementById('taskId').value = '';
+            document.getElementById('taskStatus').value = status;
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+
+        function editTask(id) {
+            const t = tasks.find(x => x.id === id);
+            if (!t) return;
+            document.getElementById('modal').classList.add('active');
+            document.getElementById('modalTitle').textContent = 'Edit Task';
+            document.getElementById('taskId').value = t.id;
+            document.getElementById('taskTitle').value = t.title;
+            document.getElementById('taskDesc').value = t.description || '';
+            document.getElementById('taskCat').value = t.category;
+            document.getElementById('taskPriority').value = t.priority;
+            document.getElementById('taskStatus').value = t.status;
+            document.getElementById('taskDue').value = t.due || '';
+        }
+
+        function saveTask(e) {
+            e.preventDefault();
+            const id = document.getElementById('taskId').value || 'task_' + Date.now();
+            const data = {
+                id,
+                title: document.getElementById('taskTitle').value,
+                description: document.getElementById('taskDesc').value,
+                category: document.getElementById('taskCat').value,
+                priority: document.getElementById('taskPriority').value,
+                status: document.getElementById('taskStatus').value,
+                due: document.getElementById('taskDue').value,
+                updatedAt: new Date().toISOString()
+            };
+
+            const idx = tasks.findIndex(t => t.id === id);
+            if (idx >= 0) {
+                tasks[idx] = { ...tasks[idx], ...data };
+            } else {
+                data.createdAt = new Date().toISOString();
+                tasks.push(data);
+            }
+
+            markModified();
+            render();
+            closeModal();
+            toast(idx >= 0 ? 'Task updated' : 'Task created');
+        }
+
+        function deleteTask(id) {
+            if (!confirm('Delete this task?')) return;
+            tasks = tasks.filter(t => t.id !== id);
+            markModified();
+            render();
+            toast('Task deleted');
+        }
+
+        function markModified() {
+            modified = true;
+            localStorage.setItem('lfg-tasks-v2', JSON.stringify(tasks));
+            updateSyncStatus();
+        }
+
+        // Export
+        function exportTasks() {
+            const data = {
+                lastUpdated: new Date().toISOString(),
+                updatedBy: 'browser',
+                tasks: tasks
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'tasks.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            toast('Exported — replace kanban/tasks.json with download');
+        }
+
+        // Utils
+        function esc(s) {
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+
+        function getDueClass(due) {
+            if (!due) return '';
+            const d = new Date(due);
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const diff = Math.ceil((d - today) / 86400000);
+            if (diff < 0) return 'overdue';
+            if (diff <= 2) return 'soon';
+            return '';
+        }
+
+        function formatDue(due) {
+            if (!due) return '';
+            const d = new Date(due);
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const diff = Math.ceil((d - today) / 86400000);
+            if (diff === 0) return 'Today';
+            if (diff === 1) return 'Tomorrow';
+            if (diff === -1) return 'Yesterday';
+            if (diff < -1) return Math.abs(diff) + 'd ago';
+            if (diff <= 7) return 'In ' + diff + 'd';
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        function toast(msg) {
+            const t = document.createElement('div');
+            t.className = 'toast';
+            t.textContent = msg;
+            document.getElementById('toasts').appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+
+        // Keyboard
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeModal();
+            if (e.key === 'n' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); openModal(); }
+        });
+
+        document.getElementById('modal').addEventListener('click', e => {
+            if (e.target.classList.contains('modal-bg')) closeModal();
+        });
+
+        // Init
+        loadTasks();
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(() => console.log('SW registered'))
+                .catch(e => console.log('SW failed:', e));
+        }
+    </script>
+</body>
+</html>
