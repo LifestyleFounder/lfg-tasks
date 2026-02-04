@@ -258,11 +258,32 @@
             border-left: 4px solid transparent;
             -webkit-user-select: none;
             user-select: none;
+            position: relative;
+        }
+
+        .task:hover {
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transform: translateY(-1px);
         }
 
         .task:active {
             transform: scale(0.98);
             opacity: 0.9;
+        }
+
+        .task::after {
+            content: '✏️';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            opacity: 0;
+            font-size: 12px;
+            transition: opacity 0.15s;
+        }
+
+        .task:hover::after {
+            opacity: 0.5;
         }
 
         .task.priority-high { border-left-color: var(--red); }
@@ -707,10 +728,7 @@
             document.getElementById('statProgress').textContent = tasks.filter(t => t.status === 'progress').length;
             document.getElementById('statDone').textContent = tasks.filter(t => t.status === 'done').length;
 
-            // Add click handlers
-            document.querySelectorAll('.task').forEach(el => {
-                el.addEventListener('click', () => editTask(el.dataset.id));
-            });
+            // Click handlers now use event delegation (see bottom of script)
         }
 
         function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
@@ -878,6 +896,14 @@
         // Close modal on backdrop click
         document.getElementById('modal').addEventListener('click', e => {
             if (e.target.classList.contains('modal-bg')) closeModal();
+        });
+
+        // Event delegation for task cards (more reliable on mobile)
+        document.querySelector('.board').addEventListener('click', e => {
+            const task = e.target.closest('.task');
+            if (task && task.dataset.id) {
+                editTask(task.dataset.id);
+            }
         });
 
         // Init
